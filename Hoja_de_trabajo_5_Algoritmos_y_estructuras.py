@@ -4,7 +4,7 @@
 import simpy
 import random
 
-INS_PER_TIME = 3 #realiza tres instrucciones en 1 unidad de tiempo
+INS_PER_TIME = 6 #realiza tres instrucciones en 1 unidad de tiempo
 class Process:
 	def __init__ (self, name,interval):
 		self.name = name
@@ -61,10 +61,10 @@ def newProcess(env,number,interval,ram,cpu,store):
 #variables de la simulacion
 env = simpy.Environment()
 store = simpy.Store(env)
-my_ram = simpy.Container(env,init = 100, capacity = 100)
+my_ram = simpy.Container(env,init = 200, capacity = 200)
 cpu = simpy.Resource(env,capacity=1)
 #generador
-for i in range(25):
+for i in range(200):
 	env.process(newProcess(env,i,10,my_ram,cpu,store))
 env.run()
 
