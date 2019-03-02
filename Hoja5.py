@@ -1,18 +1,16 @@
-#Robert Figueroa1
-#Steven Chan
 #Simulador Hoja 5
 import simpy
 import random
 
 INS_PER_TIME = 3 #realiza tres instrucciones en 1 unidad de tiempo
 class Process:
-	def __init__ (self, name,interval):
+	def __init__ (self, name,interval,env,my_ram,cpu,store):
 		self.name = name
 		self.instructions = random.randint(1,10)
 		self.const_instructions = self.instructions
 		self.timeout = random.expovariate(1.0/interval)
 		self.waitting = random.randint(1,3)
-		#self.generator = env.process(newProcess())
+		self.generator = env.process(newProcess(env,100,10,my_ram,cpu,store))
 
 	def set_ins(self,value):
 		self.instructions = self.instructions - value
@@ -21,23 +19,23 @@ class Process:
 		self.instructions = 0
 
 
-#----------------------------------------------------------------------------------------------------------------------------
+#_-----------------------------------------------------------------------------------------------------------------------------
 #generador  de un nuevo proceso:
 #un nuevo proceso involucra generar un proceso, tomar RAM y ser ejecutado
 def newProcess(env,number,interval,ram,cpu,store):
-
 	#generacion de un proceso
 	process = Process(i,interval)
 	ram.get(process.instructions)
-	print("Se ha generado el proceso %d en el tiempo :  %d con %d instrucciones" %(process.name,env.now,process.instructions))
+	print("Se ha generado el proceso # %d  en el tiempo :  %d con %d instrucciones" %(process.name, env.now,process.instructions))
+	yield env.timeout(process.timeout) #timeout del intervalo
 	#ejecucion del proceso en el CPU
 	store.put(process) #se almacena el proceso en la cola ready	
-
 	with cpu.request() as req:
 		yield req
 		now_process = yield store.get()
 		print("El proceso %d ha ingresado al CPU" %now_process.name)
-		if(now_process.instructions >= INS_PER_TIME): #INS_PER_TIME = 3
+		if(now_process.instructions >= INS_PER_TIME): 
+			#ram.put(3)
 			now_process.set_ins(INS_PER_TIME)  
 			yield env.timeout(1) #se tarda una unidad de tiempo para ejecutar las INS_PER_TIME instrucciones
 			print("El proceso : %d tiene %d instrucciones" %(now_process.name,now_process.instructions))
@@ -58,15 +56,11 @@ def newProcess(env,number,interval,ram,cpu,store):
 		print("Cantidad de memoria : %d" %ram.level)
 	print("El tiempo total es de :  %d" %env.now)
 
-#variables de la simulacion
+
 env = simpy.Environment()
 store = simpy.Store(env)
 my_ram = simpy.Container(env,init = 100, capacity = 100)
 cpu = simpy.Resource(env,capacity=1)
-#generador
-for i in range(25):
-	env.process(newProcess(env,i,10,my_ram,cpu,store))
+							#environment, cant instructions , interval , resource , store
+new = env.process(newProcess(env,100,10,my_ram,cpu,store))
 env.run()
-
-
-
